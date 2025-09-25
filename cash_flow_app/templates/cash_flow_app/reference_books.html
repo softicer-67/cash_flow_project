@@ -1,0 +1,356 @@
+{% extends 'cash_flow_app/base.html' %}
+{% load static %}
+
+{% block title %}Управление справочниками{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <h1 class="mb-4">Управление справочниками</h1>
+
+    <div class="row">
+        <!-- Статусы -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Статусы</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for status in statuses %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ status.name }}
+                            <div class="btn-group btn-group-sm">
+                                <!-- Редактирование -->
+                                <button type="button" class="btn btn-outline-primary btn-sm"
+                                        data-bs-toggle="modal" data-bs-target="#editStatusModal{{ status.id }}"
+                                        title="Редактировать">
+                                    ✏️
+                                </button>
+                                <!-- Удаление -->
+                                <form method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="delete_status_id" value="{{ status.id }}">
+                                    <button type="submit" name="delete_status" class="btn btn-outline-danger btn-sm"
+                                            onclick="return confirm('Удалить статус \"{{ status.name }}\"?')"
+                                            title="Удалить">
+                                        🗑️
+                                    </button>
+                                </form>
+                            </div>
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item text-muted">Нет статусов</li>
+                        {% endfor %}
+                    </ul>
+                    <form method="post" class="mt-3">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="text" name="status_name" class="form-control" placeholder="Новый статус" required>
+                            <button type="submit" name="add_status" class="btn btn-primary">Добавить</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Типы операций -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Типы операций</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for type in operation_types %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ type.name }}
+                            <div class="btn-group btn-group-sm">
+                                <!-- Редактирование -->
+                                <button type="button" class="btn btn-outline-primary btn-sm"
+                                        data-bs-toggle="modal" data-bs-target="#editTypeModal{{ type.id }}"
+                                        title="Редактировать">
+                                    ✏️
+                                </button>
+                                <!-- Удаление -->
+                                <form method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="delete_type_id" value="{{ type.id }}">
+                                    <button type="submit" name="delete_type" class="btn btn-outline-danger btn-sm"
+                                            onclick="return confirm('Удалить тип операции \"{{ type.name }}\"?')"
+                                            title="Удалить">
+                                        🗑️
+                                    </button>
+                                </form>
+                            </div>
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item text-muted">Нет типов операций</li>
+                        {% endfor %}
+                    </ul>
+                    <form method="post" class="mt-3">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="text" name="type_name" class="form-control" placeholder="Новый тип операции" required>
+                            <button type="submit" name="add_type" class="btn btn-primary">Добавить</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Категории -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Категории</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for category in categories %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>
+                                    <strong>{{ category.name }}</strong>
+                                    <small class="text-muted">({{ category.operation_type.name }})</small>
+                                </span>
+                                <div class="btn-group btn-group-sm">
+                                    <!-- Редактирование -->
+                                    <button type="button" class="btn btn-outline-primary btn-sm"
+                                            data-bs-toggle="modal" data-bs-target="#editCategoryModal{{ category.id }}"
+                                            title="Редактировать">
+                                        ✏️
+                                    </button>
+                                    <!-- Удаление -->
+                                    <form method="post" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="delete_category_id" value="{{ category.id }}">
+                                        <button type="submit" name="delete_category" class="btn btn-outline-danger btn-sm"
+                                                onclick="return confirm('Удалить категорию \"{{ category.name }}\"?')"
+                                                title="Удалить">
+                                            🗑️
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item text-muted">Нет категорий</li>
+                        {% endfor %}
+                    </ul>
+                    <form method="post" class="mt-3">
+                        {% csrf_token %}
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <input type="text" name="category_name" class="form-control" placeholder="Новая категория" required>
+                            </div>
+                            <div class="col-4">
+                                <select name="category_type" class="form-select" required>
+                                    <option value="">Выберите тип</option>
+                                    {% for type in operation_types %}
+                                    <option value="{{ type.id }}">{{ type.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-2">
+                                <button type="submit" name="add_category" class="btn btn-primary w-100">+</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Подкатегории -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Подкатегории</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        {% for subcategory in subcategories %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>
+                                    <strong>{{ subcategory.name }}</strong>
+                                    <small class="text-muted">({{ subcategory.category.name }})</small>
+                                </span>
+                                <div class="btn-group btn-group-sm">
+                                    <!-- Редактирование -->
+                                    <button type="button" class="btn btn-outline-primary btn-sm"
+                                            data-bs-toggle="modal" data-bs-target="#editSubcategoryModal{{ subcategory.id }}"
+                                            title="Редактировать">
+                                        ✏️
+                                    </button>
+                                    <!-- Удаление -->
+                                    <form method="post" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="delete_subcategory_id" value="{{ subcategory.id }}">
+                                        <button type="submit" name="delete_subcategory" class="btn btn-outline-danger btn-sm"
+                                                onclick="return confirm('Удалить подкатегорию \"{{ subcategory.name }}\"?')"
+                                                title="Удалить">
+                                            🗑️
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item text-muted">Нет подкатегорий</li>
+                        {% endfor %}
+                    </ul>
+                    <form method="post" class="mt-3">
+                        {% csrf_token %}
+                        <div class="row g-2">
+                            <div class="col-5">
+                                <input type="text" name="subcategory_name" class="form-control" placeholder="Новая подкатегория" required>
+                            </div>
+                            <div class="col-5">
+                                <select name="subcategory_category" class="form-select" required>
+                                    <option value="">Выберите категорию</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-2">
+                                <button type="submit" name="add_subcategory" class="btn btn-primary w-100">+</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальные окна для редактирования -->
+{% for status in statuses %}
+<div class="modal fade" id="editStatusModal{{ status.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать статус</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="edit_status_id" value="{{ status.id }}">
+                    <div class="mb-3">
+                        <label class="form-label">Название статуса</label>
+                        <input type="text" name="edit_status_name" class="form-control" value="{{ status.name }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" name="edit_status" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% for type in operation_types %}
+<div class="modal fade" id="editTypeModal{{ type.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать тип операции</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="edit_type_id" value="{{ type.id }}">
+                    <div class="mb-3">
+                        <label class="form-label">Название типа операции</label>
+                        <input type="text" name="edit_type_name" class="form-control" value="{{ type.name }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" name="edit_type" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% for category in categories %}
+<div class="modal fade" id="editCategoryModal{{ category.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать категорию</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="edit_category_id" value="{{ category.id }}">
+                    <div class="mb-3">
+                        <label class="form-label">Название категории</label>
+                        <input type="text" name="edit_category_name" class="form-control" value="{{ category.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Тип операции</label>
+                        <select name="edit_category_type" class="form-select" required>
+                            {% for type in operation_types %}
+                            <option value="{{ type.id }}" {% if type.id == category.operation_type.id %}selected{% endif %}>
+                                {{ type.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" name="edit_category" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% for subcategory in subcategories %}
+<div class="modal fade" id="editSubcategoryModal{{ subcategory.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактировать подкатегорию</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="edit_subcategory_id" value="{{ subcategory.id }}">
+                    <div class="mb-3">
+                        <label class="form-label">Название подкатегории</label>
+                        <input type="text" name="edit_subcategory_name" class="form-control" value="{{ subcategory.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Категория</label>
+                        <select name="edit_subcategory_category" class="form-select" required>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}" {% if category.id == subcategory.category.id %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" name="edit_subcategory" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

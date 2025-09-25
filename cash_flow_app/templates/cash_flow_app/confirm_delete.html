@@ -1,0 +1,32 @@
+{% extends 'cash_flow_app/base.html' %}
+
+{% block title %}Удаление записи{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">Подтверждение удаления</h4>
+            </div>
+            <div class="card-body">
+                <p>Вы уверены, что хотите удалить эту запись?</p>
+                <div class="alert alert-info">
+                    <strong>Дата:</strong> {{ cash_flow.created_date|date:"d.m.Y" }}<br>
+                    <strong>Тип:</strong> {{ cash_flow.operation_type.name }}<br>
+                    <strong>Категория:</strong> {{ cash_flow.category.name }}<br>
+                    <strong>Сумма:</strong> {{ cash_flow.amount }} руб.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">Да, удалить</button>
+                        <a href="{% url 'cash_flow_list' %}" class="btn btn-secondary">Отмена</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

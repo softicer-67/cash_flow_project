@@ -1,0 +1,281 @@
+{% extends 'cash_flow_app/base.html' %}
+{% load static %}
+
+{% block title %}Список записей ДДС{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Движение денежных средств</h1>
+        <a href="{% url 'cash_flow_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Создать запись
+        </a>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="filter-section">
+        <h5 class="filter-title">Фильтры</h5>
+        <form method="get" class="row g-3">
+            <div class="col-md-2">
+                <label class="form-label">Дата с</label>
+                <input type="date" name="date_from" class="form-control" value="{{ filters.date_from }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Дата по</label>
+                <input type="date" name="date_to" class="form-control" value="{{ filters.date_to }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Статус</label>
+                <select name="status" class="form-select">
+                    <option value="">Все</option>
+                    {% for status in statuses %}
+                        <option value="{{ status.id }}" {% if filters.status == status.id|stringformat:"i" %}selected{% endif %}>
+                            {{ status.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Тип операции</label>
+                <select name="operation_type" class="form-select">
+                    <option value="">Все</option>
+                    {% for type in operation_types %}
+                        <option value="{{ type.id }}" {% if filters.operation_type == type.id|stringformat:"i" %}selected{% endif %}>
+                            {{ type.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Категория</label>
+                <select name="category" class="form-select">
+                    <option value="">Все</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {% if filters.category == category.id|stringformat:"i" %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Подкатегория</label>
+                <select name="subcategory" class="form-select">
+                    <option value="">Все</option>
+                    {% for subcategory in subcategories %}
+                        <option value="{{ subcategory.id }}" {% if filters.subcategory == subcategory.id|stringformat:"i" %}selected{% endif %}>
+                            {{ subcategory.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Применить фильтры
+                </button>
+                <a href="{% url 'cash_flow_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Сбросить
+                </a>
+            </div>
+        </form>
+    </div>
+    <br>
+
+    <!-- Информация о фильтрах и итогах -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="alert alert-info py-2">
+                <small>
+                    <i class="fas fa-info-circle"></i>
+                    Показано записей: <strong>{{ cash_flows.count }}</strong>
+                    {% if filters.date_from or filters.date_to or filters.status or filters.operation_type or filters.category or filters.subcategory %}
+                        (отфильтровано)
+                    {% endif %}
+                </small>
+            </div>
+        </div>
+        <div class="col-md-6 text-end">
+            <div class="alert alert-warning py-2">
+                <small>
+                    <i class="fas fa-calculator"></i>
+                    Общая сумма: <strong>{{ total_amount|floatformat:2 }} р.</strong>
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Таблица записей -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Дата</th>
+                            <th>Статус</th>
+                            <th>Тип</th>
+                            <th>Категория</th>
+                            <th>Подкатегория</th>
+                            <th>Сумма</th>
+                            <th>Комментарий</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cash_flow in cash_flows %}
+                        <tr>
+                            <td>{{ cash_flow.created_date|date:"d.m.Y" }}</td>
+                            <td>
+                                <span class="badge
+                                    {% if cash_flow.status.name == 'Бизнес' %}bg-primary
+                                    {% elif cash_flow.status.name == 'Личное' %}bg-success
+                                    {% elif cash_flow.status.name == 'Налог' %}bg-warning
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ cash_flow.status.name }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge
+                                    {% if cash_flow.operation_type.name == 'Пополнение' %}bg-success
+                                    {% elif cash_flow.operation_type.name == 'Списание' %}bg-danger
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ cash_flow.operation_type.name }}
+                                </span>
+                            </td>
+                            <td>{{ cash_flow.category.name }}</td>
+                            <td>{{ cash_flow.subcategory.name }}</td>
+                            <td>
+                                <strong class="{% if cash_flow.operation_type.name == 'Пополнение' %}text-success{% else %}text-danger{% endif %}">
+                                    {{ cash_flow.amount|floatformat:2 }} р.
+                                </strong>
+                            </td>
+                            <td>
+                                {% if cash_flow.comment %}
+                                    <span title="{{ cash_flow.comment }}">
+                                        {{ cash_flow.comment|truncatewords:5 }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'cash_flow_edit' cash_flow.id %}" class="btn btn-outline-primary" title="Редактировать">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'cash_flow_delete' cash_flow.id %}" class="btn btn-outline-danger delete-btn" title="Удалить">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-2x mb-2"></i><br>
+                                Нет записей
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <!-- Итоговая строка -->
+                    <tfoot class="table-active">
+                        <tr>
+                            <td colspan="5" class="text-end fw-bold">Итого:</td>
+                            <td class="fw-bold fs-6">
+                                <span class="{% if total_amount >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {{ total_amount|floatformat:2 }} р.
+                                </span>
+                            </td>
+                            <td colspan="2">
+                                <small class="text-muted">
+                                    {% if cash_flows.count == 0 %}0 записей
+                                    {% else %}{{ cash_flows.count }} записей
+                                    {% endif %}
+                                </small>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Дополнительная статистика -->
+    {% if cash_flows.count > 0 %}
+    <div class="row mt-3">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-success">
+                        <i class="fas fa-arrow-up"></i> Пополнения
+                    </h5>
+                    <p class="card-text fs-4">{{ income_total|floatformat:2 }} р.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-danger">
+                        <i class="fas fa-arrow-down"></i> Списания
+                    </h5>
+                    <p class="card-text fs-4">{{ expense_total|floatformat:2 }} р.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">
+                        <i class="fas fa-balance-scale"></i> Баланс
+                    </h5>
+                    <p class="card-text fs-4 {% if balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        {{ balance|floatformat:2 }} р.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Подтверждение удаления
+    $('.delete-btn').click(function(e) {
+        if (!confirm('Вы уверены, что хотите удалить эту запись?')) {
+            e.preventDefault();
+        }
+    });
+
+    // Подсказки для комментариев
+    $('[title]').tooltip();
+});
+</script>
+
+<style>
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.table tfoot td {
+    border-top: 2px solid #dee2e6;
+    font-weight: 600;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+}
+
+.card.text-center .card-text {
+    font-weight: 600;
+}
+</style>
+{% endblock %}
